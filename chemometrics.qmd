@@ -1,18 +1,19 @@
 # Chemometrics {#sec-chemometrics}
 
-In this section, we introduce an alternative modeling paradigm that is commonly referred as **Chemometrics**. According to [Wikipedia](https://en.wikipedia.org/wiki/Chemometrics),
+In this section, we introduce a modeling paradigm commonly referred to as **Chemometrics**. According to [Wikipedia](https://en.wikipedia.org/wiki/Chemometrics),
 
 > **Chemometrics** is the science of extracting information from chemical systems by data-driven means. Chemometrics is inherently interdisciplinary, using methods frequently employed in core data-analytic disciplines such as multivariate statistics, applied mathematics, and computer science, in order to address problems in chemistry, biochemistry, medicine, biology and chemical engineering. In this way, it mirrors other interdisciplinary fields, such as psychometrics and econometrics.
 
-Chemometrics has been largely employed in soil spectroscopy especially with the use of traditional preprocessing tools and Partial Least Squares Regression (PLSR). PLSR is a classic algorithm that is able do deal with the multivariate and multicolinear nature of the spectra to create robust regression models. Along with regression, many other features were built around PLSR and PCA that aid in the interpretation of models and prediction results. Therefore, this section will present and discuss these possibilities.
+Chemometrics has been widely employed in soil spectroscopy, especially with the use of traditional preprocessing tools and Partial Least Squares Regression (PLSR). PLSR is a classic algorithm that is able to deal with the multivariate and multicollinear nature of spectra to create robust regression models. Along with regression, many other features have been built around PLSR and PCA that aid in the interpretation of models and prediction results. This section will present and discuss these possibilities.
 
-The choice of using classic Chemometrics tools or the ones presented in the [**Processing**](#subsec-preparing) and [**Machine Learning**](#subsec-ml) sections will largely depend on the project application and familiarity. There is no perfect method so we usually recommend testing both and choosing the one that best suit your needs.
+The choice between classic chemometrics tools and those presented in the [**Processing**](#subsec-preparing) and [**Machine Learning**](#subsec-ml) sections will largely depend on the project application and familiarity with each framework. There is no perfect method, so we usually recommend testing both and choosing the one that best suits your needs.
 
-The **mdatools** R package is a collection of Chemometrics features that share a common "user interface". It contains a series of features for preprocessing, exploring, modeling, and interpreting multivariate spectral data.
+The **mdatools** R package is a collection of chemometrics tools that share a common interface. It contains a series of features for preprocessing, exploring, modeling, and interpreting multivariate spectral data.
 
-The **mdatools** framework is presented in @Kucheryavskiy2020. For a full documentation of the available features, please visit <https://mdatools.com/docs/index.html>.
+The **mdatools** framework is presented in @Kucheryavskiy2020. For full documentation of the available features, please visit <https://mdatools.com/docs/index.html>.
 
-A list of all required packages for this section is provided in the following code chunk:  
+A list of all required packages for this section is provided in the following code chunk:
+
 ```{r, libraries, message=FALSE, warning=FALSE}
 library("tidyverse") # Regular data wrangling
 library("mdatools") # Chemometrics
@@ -22,13 +23,13 @@ library("qs") # Loading serialized files
 
 ## Preparation of files
 
-Instead of using the `train.csv` and `test.csv` files from the **Machine Learning** section, we are going to preprocess and model the same spectral data using a different set of tools. For this, we are going to use the same Neospectra database that is part of the Open Soil Spectral Library (OSSL).
+Instead of using the `train.csv` and `test.csv` files from the **Processing** section, we are going to preprocess and model the same spectral data using a different set of tools. For this, we use the same Neospectra database that is part of the Open Soil Spectral Library (OSSL).
 
 ```{r files, message=FALSE, warning=FALSE}
-## Internet configuration for downloading big datasets
+## Internet configuration for downloading large datasets
 options(timeout = 10000)
 
-## Reading serialized files
+## Reading serialized files using qs::qread_url()
 neospectra.soil <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs")
 dim(neospectra.soil)
 
@@ -39,7 +40,7 @@ neospectra.nir <- qread_url("https://storage.googleapis.com/soilspec4gg-public/n
 dim(neospectra.nir)
 ```
 
-From the original files, we can now select only the relevant data for our modeling.
+From the original files, we select only the relevant data for modeling.
 
 ```{r preparation, message=FALSE, warning=FALSE}
 # Selecting relevant site data
@@ -54,9 +55,10 @@ neospectra.soil <- neospectra.soil %>%
 neospectra.nir <- neospectra.nir %>%
   select(id.sample_local_c, starts_with("scan_nir")) %>%
   group_by(id.sample_local_c) %>%
-  summarise_all(mean, .group = "drop")
+  summarise(across(everything(), mean)) %>%
+  ungroup()
 
-# Renaming spectral columns headers to numeric integers
+# Inspecting and renaming spectral column headers to numeric values
 neospectra.nir %>%
   select(starts_with("scan_nir")) %>%
   names() %>%
@@ -77,7 +79,7 @@ head(spectral.column.names)
 tail(spectral.column.names)
 ```
 
-Lastly, we just make sure to have all data prepared and complete.
+We then join all three tables and remove samples without SOC values.
 
 ```{r join, message=FALSE, warning=FALSE}
 # Joining data
@@ -94,8 +96,8 @@ neospectra <- neospectra %>%
 A subset of the imported spectra can be visualized below.
 
 ```{r visualization, message=FALSE, warning=FALSE}
-# Spectral visualization
-set.seed(1993)
+# Spectral visualization of a random subset
+set.seed(42)
 neospectra %>%
   sample_n(100) %>%
   pivot_longer(any_of(spectral.column.names),
@@ -111,21 +113,22 @@ neospectra %>%
 
 ## Chemometric modeling
 
-To start with chemometrics, the **mdatools** offer a series of built-in function for preprocessing spectra. We are going to use the **Standard Normal Variate** function.
+To start with chemometrics, **mdatools** offers a series of built-in functions for preprocessing spectra. We are going to combine **Savytzky-Golay first derivative** (`prep.savgol()`) with **Standard Normal Variate** (`prep.snv()`).
 
 ```{r preprocessing, message=FALSE, warning=FALSE}
-# Preprocessing with SNV
-neospectra.snv <- neospectra %>%
+# Preprocessing with SG 1st Der. and SNV
+neospectra.prep <- neospectra %>%
   select(all_of(spectral.column.names)) %>%
   as.matrix() %>%
+  prep.savgol(width = 11, porder = 1, dorder = 1) %>%
   prep.snv(.) %>%
   as_tibble() %>%
   bind_cols({neospectra %>%
       select(-all_of(spectral.column.names))}, .)
 
-# Visualization
-set.seed(1993)
-neospectra.snv %>%
+# Visualization of preprocessed spectra
+set.seed(42)
+neospectra.prep %>%
   sample_n(100) %>%
   pivot_longer(any_of(spectral.column.names),
                names_to = "wavelength",
@@ -136,183 +139,188 @@ neospectra.snv %>%
   geom_line(aes(x = wavelength, y = reflectance, group = id.sample_local_c),
             alpha = 0.25, linewidth = 0.25) +
   theme_light()
-
 ```
 
-Before model calibration, we are going to split the dataset into train and test sets. We use the same split rule employed in the **Machine Learning** section.
+Before model calibration, we split the dataset into train and test sets using the same geographic rule employed in the **Processing** section — USA samples for training, African samples for testing.
 
 ```{r split, message=FALSE, warning=FALSE}
-# Preparing train split, separating predictors and outcome, and applying log1p
-neospectra.train <- neospectra.snv %>%
+# Train split: USA samples
+# Predictors and outcome are separated; log1p is applied to SOC to reduce skewness
+neospectra.train <- neospectra.prep %>%
   filter(location.country_iso.3166_txt == "USA")
 
 neospectra.train.predictors <- neospectra.train %>%
-  select(all_of(spectral.column.names))
+  select(all_of(spectral.column.names)) %>%
+  as.matrix()
 
 neospectra.train.outcome <- neospectra.train %>%
   select(oc_usda.c729_w.pct) %>%
-  mutate(oc_usda.c729_w.pct = log1p(oc_usda.c729_w.pct))
+  mutate(oc_usda.c729_w.pct = log1p(oc_usda.c729_w.pct)) %>%
+  as.matrix()
 
-# Preparing test split, separating predictors and outcome, and applying log1p
-neospectra.test <- neospectra.snv %>%
+# Test split: non-USA samples
+neospectra.test <- neospectra.prep %>%
   filter(location.country_iso.3166_txt != "USA")
 
 neospectra.test.predictors <- neospectra.test %>%
-  select(all_of(spectral.column.names))
+  select(all_of(spectral.column.names)) %>%
+  as.matrix()
 
 neospectra.test.outcome <- neospectra.test %>%
   select(oc_usda.c729_w.pct) %>%
-  mutate(oc_usda.c729_w.pct = log1p(oc_usda.c729_w.pct))
+  mutate(oc_usda.c729_w.pct = log1p(oc_usda.c729_w.pct)) %>%
+  as.matrix()
 ```
 
-Now we just feed the preprocessed spectra into the PLSR algorithm.
+We can now pass the preprocessed spectra to the PLSR algorithm.
 
-PLSR in this case, will compress the spectra into several orthogonal features that both maximize the variance in the spectra and the soil property of interest, in this case, SOC. The resulting scores from these latent factors are feed in a multivariate linear regression model.
+PLSR compresses the spectra into several uncorrelated factors that simultaneously maximize covariance of the spectra and the soil property of interest — in this case, SOC. The resulting scores from these latent factors are then fed into a multivariate linear regression model.
 
 ::: {.callout-note}
 ## Note
-If you want to learn more about PLSR and PCA, the **mdatools** documentation offers a good explanation. Similarly, take a look at this awesome chapter from [**All Models Are Wrong: Concepts of Statistical Learning**](https://allmodelsarewrong.github.io/pls.html).
+If you want to learn more about PLSR and PCA, the **mdatools** documentation offers a good explanation. Similarly, take a look at this excellent chapter from [**All Models Are Wrong: Concepts of Statistical Learning**](https://allmodelsarewrong.github.io/pls.html).
 :::
 
-We are going to test up to 20 factors (`ncomp = 20`), run 10-fold cross-validation for the train data (`cv = 10`), center and scale the spectra before compression (which are performed locally, i.e., independently for each fold [`center = TRUE, scale = TRUE, cv.scope = 'local'`]), and use a data driven method (`"ddmoments"`) to estimate critical limits for the extreme and outlier samples. The model is named "SOC prediction model".
+We are going to test up to 20 factors (`ncomp = 20`), run 10-fold cross-validation on the train data (`cv = 10`), center the spectra (no scale) before compression — performed globally across folds (`center = TRUE, scale = FALSE, cv.scope = 'global'`) — and use a data-driven method (`"ddmoments"`) to estimate critical limits for extreme and outlier observations. The model is named "SOC prediction model".
 
-We can fit a PLSR by passing the train and test samples together in the call...
+We can fit the PLSR by passing the train and test samples together in the call...
+
 ```{r plsr, message=FALSE, warning=FALSE}
-set.seed(1993)
+set.seed(42)
 pls.model.soc <- pls(x = neospectra.train.predictors,
                      y = neospectra.train.outcome,
                      ncomp = 20,
                      x.test = neospectra.test.predictors,
                      y.test = neospectra.test.outcome,
-                     center = TRUE, scale = TRUE,
-                     cv = 10, lim.type = "ddmoments", cv.scope = 'local',
+                     center = TRUE, scale = FALSE,
+                     cv = 10, lim.type = "ddmoments", cv.scope = 'global',
                      info = "SOC prediction model")
 ```
 
-Or run separately.
+Or run separately, which is useful when you want to apply a calibration model to new data independently.
 
 ```{r plsr_split, message=FALSE, warning=FALSE}
-# Alternatively
-set.seed(1993)
+# Alternatively: fit calibration model first, then predict on test set
+set.seed(42)
 pls.model.soc.calibration <- pls(x = neospectra.train.predictors,
                                  y = neospectra.train.outcome,
                                  ncomp = 20,
-                                 center = TRUE, scale = TRUE,
-                                 cv = 10, lim.type = "ddmoments", cv.scope = 'local',
+                                 center = TRUE, scale = FALSE,
+                                 cv = 10, lim.type = "ddmoments", cv.scope = 'global',
                                  info = "SOC prediction model")
 
 pls.model.soc.predictions <- predict(pls.model.soc.calibration,
                                      x = neospectra.test.predictors,
-                                     y = neospectra.test.outcome, cv = F)
+                                     y = neospectra.test.outcome,
+                                     cv = FALSE)
 ```
 
 From these model fits, we can get a summary of the model.
 
 ```{r model_summary}
-# Get an overview of performance
 summary(pls.model.soc)
 ```
 
-You can see that the number of selected components is 17, which was automatically chosen from 10CV results.
+You can see that the number of selected components is 17, which was automatically chosen from the 10-fold CV results.
 
-Let's plot the models. We will explore in detail the visualization features soon. 
+Let's plot the model. We will explore the visualization features in more detail soon.
+
 ```{r model_viz}
-# Visualize representation limits, model coefficient, performance and fit
-# Remove legend for proper visualization
-plot(pls.model.soc, show.legend = T)
+# Visualize representation limits, model coefficients, performance, and fit
+plot(pls.model.soc, show.legend = TRUE)
 ```
 
-There is big mismatch between CV and test performance, and this happened likely due to the geographical difference of the samples. Let's set the number of comps that worked best for test samples.
+There is a slight mismatch between CV and test performance, likely due to the geographical difference and underlying relationships (soil types, types of carbon) between the training (USA) and test (Africa) samples. Let's set the number of components that worked best for the test samples.
 
-```{r}
-# The performance is more consistent across train, cv, and test with 5 comps
-pls.model.soc <- selectCompNum(pls.model.soc, 5)
+```{r select_ncomp}
+# Performance is more consistent across train, CV, and test with 11 components
+pls.model.soc <- selectCompNum(pls.model.soc, 11)
 summary(pls.model.soc)
-plot(pls.model.soc, show.legend = F)
+plot(pls.model.soc, show.legend = FALSE)
 ```
 
-# Model and predictions interpretation
+## Model and predictions interpretation
 
-We can start the interpretation by looking at the observations classification based on the spectral dissimilarity. For this, **mdatools** use both the **Q statistics** and **Hotelling $T^2$** as distance metrics for classifying samples into regular, extreme or outlier.
+We can start the interpretation by looking at how observations are classified based on spectral dissimilarity. For this, **mdatools** uses both the **Q statistic** and **Hotelling $T^2$** as distance metrics for classifying samples as regular, extreme, or outlier.
 
-The **Q statistics**, known as orthogonal distance in **mdatools**, measures the remaining spectral variance that is not accounted during spectral compression and is not used by the models. Therefore, observations with unique features not well represented by PLSR are flagged. On the other hand, the **Hotelling $T^2$** focus on the mean deviation of observation values (scores) produced by the retained factors used in the models, with very distinct samples being flagged. Therefore, these two complimentary methods are able to detect potential observations that are underrepresented by the PLSR model. The classification is based on critical limits that are calculated from the calibration set, and **mdatools** currently make possible to use four different methods. By default, it uses the data driven moments (`lim.type = "ddmoments"`) developed by the author.
+The **Q statistic**, known as orthogonal distance in **mdatools**, measures the remaining spectral variance that is not accounted for during spectral compression and is not used by the model. Observations with unique features not well represented by the PLSR factors are flagged. The **Hotelling $T^2$**, on the other hand, focuses on the mean deviation of observation scores produced by the retained factors, flagging samples that are very distinct in score space. Together, these two complementary metrics can detect observations that are potentially underrepresented by the PLSR model. The classification thresholds are based on critical limits calculated from the calibration set; **mdatools** currently supports four methods, using the data-driven moments approach (`lim.type = "ddmoments"`) by default.
 
-Let's see the classification and plot it with the model residuals. We can see that for the test set, several observations were flagged as potential extreme observations, with no spectral outlier detected.
+We can see that for the test set, several observations were flagged as potential extreme observations, with no spectral outliers detected.
+
 ```{r classification, message=FALSE, warning=FALSE}
-# Categorization
+# Sample categorization based on Q and T2 limits
 outlier.detection <- categorize(pls.model.soc.calibration,
                                 pls.model.soc.predictions,
-                                ncomp = 5)
+                                ncomp = 11)
 head(outlier.detection)
 
 plotResiduals(pls.model.soc.predictions,
               cgroup = outlier.detection,
-              ncomp = 5)
+              ncomp = 11)
 ```
 
-We can further explore the PLSR model with additional built-in plot functions, for example, exploring in detail the model performance across the range of components tested, for all data splits.
+We can further explore the PLSR model with additional built-in plot functions — for example, examining model performance across the full range of components tested, for all data splits.
 
 ```{r performance_components}
 plotRMSE(pls.model.soc, show.labels = TRUE)
 ```
 
-With the predictions made, we can run a classic observed vs predicted scatterplot.
+With the predictions made, we can run a classic observed vs. predicted scatterplot.
 
 ```{r scatterplot}
 # Predictions scatterplot
-plotPredictions(pls.model.soc, show.line = T, pch = 20, cex = 0.25)
-abline(a=0, b=1)
-
-# plotPredictions(pls.model.soc.predictions, show.line = T, pch = 20, cex = 0.25)
-# abline(a=0, b=1)
+plotPredictions(pls.model.soc, show.line = TRUE, pch = 20, cex = 0.25)
+abline(a = 0, b = 1)
 ```
 
-And inspect the residuals...
+We can also inspect the residuals.
+
 ```{r residuals}
-# Inspection plot for outcome residual
+# Inspection plot for outcome residuals
 plotYResiduals(pls.model.soc, cex = 0.5, show.label = TRUE)
 ```
 
-Another common visualization that aids the interpretation of models is the variable importance. For PLSR, the Variable Importance to Projection (VIP) is routinely employed.
+Another common visualization that aids model interpretation is variable importance. For PLSR, the Variable Importance in Projection (VIP) score is routinely employed.
 
 ```{r vip}
-# Variable influence on projection (VIP) scores
+# Variable Importance in Projection (VIP) scores
 plotVIPScores(pls.model.soc)
-vip = vipscores(pls.model.soc, ncomp = 5)
+vip <- vipscores(pls.model.soc, ncomp = 11)
 head(vip)
 ```
 
-There are many other plot functions for interpreting the PLSR model.
+There are many other plot functions available for interpreting the PLSR model.
 
-For example, how much of the original spectral variance (X variables) was retained by 5 components/factors? Around 97% for both train and test sets.
+For example, how much of the original spectral variance (X variables) is retained by 11 components/factors? Around 90% for both train and test sets.
 
 ```{r x_variance}
 # Cumulative variance retained from predictors (spectra)
 plotXCumVariance(pls.model.soc, type = 'h', show.labels = TRUE, legend.position = 'bottomright')
 ```
 
-As the PLSR try to maximize both the X (predictors) and Y (single or multiple outcome) original variance during compression, how much of the outcome variance was retained by the 5 components/factors? About 40% in the train and 90% in the test samples.
+As PLSR simultaneously maximizes variance in both the spectra (X) and the outcome (Y), how much of the outcome variance is retained by 11 components? About 70% in the train (= R^2) set and 88% in the test samples.
 
 ```{r y_variance}
 # Cumulative variance retained from outcome
 plotYCumVariance(pls.model.soc, type = 'b', show.labels = TRUE, legend.position = 'bottomright')
 ```
 
-And visualize the scores of the latent factors produced. In this case, we are plotting the first 3 factors.
+We can also visualize the scores of the latent factors. Here we plot the first three combinations.
+
 ```{r x_scores}
-# Scores plots for compressed spectra () 
-plotXScores(pls.model.soc, comp = c(1, 2), show.legend = T, cex = 0.5, legend.position = 'topleft')
-plotXScores(pls.model.soc, comp = c(1, 3), show.legend = T,  cex = 0.5, legend.position = 'bottomright')
+# Score plots for compressed spectra
+plotXScores(pls.model.soc, comp = c(1, 2), show.legend = TRUE, cex = 0.5, legend.position = 'topleft')
+# plotXScores(pls.model.soc, comp = c(1, 3), show.legend = TRUE, cex = 0.5, legend.position = 'bottomright')
 ```
 
-During spectra compression, we can visualize the estimated loadings for the first 5 components across the original spectrum.
+During spectra compression, we can also visualize the estimated loadings for the first 5 components across the original spectral range.
 
 ```{r loadings}
-# Inspection plot for outcome residual
+# Loadings plot for the first 5 components
 plotXLoadings(pls.model.soc, comp = c(1, 2, 3, 4, 5), type = 'l')
 ```
 
-Lastly, we can explore all the internal information retained in the **pls** and **plsres** objects produced by the **mdatools**.
+Lastly, we can explore all the internal information retained in the **pls** and **plsres** objects produced by **mdatools**.
 
 ```{r internal}
 # Exploring internal info from model object
@@ -326,17 +334,17 @@ pls.model.soc$res$test
 pls.model.soc$res$test$xdecomp
 ```
 
-Let's grab the test predictions for a customized plot.
+Let's extract the test predictions for a customized plot. Note that since we applied `log1p()` to the SOC outcome before modeling, we back-transform the predictions with `expm1()` to return to the original scale.
 
 ```{r predictions}
-# Grabbing test predictions
+# Extracting test predictions
 test.predictions <- pls.model.soc$res$test$y.pred
 dim(test.predictions)
 
-# Selecting "Comp 5 predictons"
-test.predictions <- tibble(predicted = test.predictions[,5,1])
+# Selecting predictions at component 11
+test.predictions <- tibble(predicted = test.predictions[,11,1])
 
-# Formatting
+# Back-transforming predicted values from log1p to original scale
 neospectra.test.results <- neospectra.test %>%
   select(-all_of(spectral.column.names)) %>%
   bind_cols(test.predictions) %>%
@@ -344,49 +352,48 @@ neospectra.test.results <- neospectra.test %>%
   mutate(predicted = expm1(predicted))
 ```
 
-And calculated additional evalution metrics.
+We can then calculate additional evaluation metrics on the original scale.
 
 ```{r yardstick}
 # Calculating performance metrics
-library("yardstick")
 neospectra.test.performance <- neospectra.test.results %>%
   summarise(n = n(),
             rmse = rmse_vec(truth = observed, estimate = predicted),
             bias = msd_vec(truth = observed, estimate = predicted),
             rsq = rsq_trad_vec(truth = observed, estimate = predicted),
-            ccc = ccc_vec(truth = observed, estimate = predicted, bias = T),
+            ccc = ccc_vec(truth = observed, estimate = predicted, bias = TRUE),
+            rpd = rpd_vec(truth = observed, estimate = predicted),
             rpiq = rpiq_vec(truth = observed, estimate = predicted))
 
 neospectra.test.performance
 ```
 
-And plot the scatterplot with **ggplot**.
+And plot the final observed vs. predicted scatterplot with **ggplot2**.
 
 ```{r ggplot}
 # Final accuracy plot
-perfomance.annotation <- paste0("CCC = ", round(neospectra.test.performance[[1,"ccc"]], 2),
+performance.annotation <- paste0("Rsq = ", round(neospectra.test.performance[[1,"rsq"]], 2),
                                 "\nRMSE = ", round(neospectra.test.performance[[1,"rmse"]], 2), " wt%")
 
 p.final <- ggplot(neospectra.test.results) +
   geom_point(aes(x = observed, y = predicted)) +
   geom_abline(intercept = 0, slope = 1) +
-  geom_text(aes(x = -Inf, y = Inf, hjust = -0.1, vjust = 1.2),
-            label = perfomance.annotation, size = 3) +
+  annotate(geom = "text", x = -Inf, y = Inf, hjust = -0.1, vjust = 1.2,
+            label = performance.annotation, size = 3) +
   labs(title = "Soil Organic Carbon (wt%) test prediction",
        x = "Observed", y = "Predicted") +
   theme_light() + theme(legend.position = "bottom")
 
-# Making sure it we have a square plot
+# Ensuring a square plot with equal axis limits
 r.max <- max(layer_scales(p.final)$x$range$range)
 r.min <- min(layer_scales(p.final)$x$range$range)
 
 s.max <- max(layer_scales(p.final)$y$range$range)
 s.min <- min(layer_scales(p.final)$y$range$range)
 
-t.max <- round(max(r.max,s.max),1)
-t.min <- round(min(r.min,s.min),1)
+t.max <- round(max(r.max, s.max), 1)
+t.min <- round(min(r.min, s.min), 1)
 
-p.final <- p.final + coord_equal(xlim = c(t.min,t.max), ylim = c(t.min,t.max))
+p.final <- p.final + coord_equal(xlim = c(t.min, t.max), ylim = c(t.min, t.max))
 p.final
 ```
-

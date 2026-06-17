@@ -1,1 +1,1 @@
-Sitemap: https://soilspectroscopy.github.io/soilspec-workshop/sitemap.xml
+Sitemap: https://soilspectroscopy.github.io/predictive-soilspec-training/sitemap.xml

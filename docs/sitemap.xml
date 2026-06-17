@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/index.html</loc>
-    <lastmod>2025-08-14T23:55:55.604Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/index.html</loc>
+    <lastmod>2026-06-17T17:26:52.372Z</lastmod>
   </url>
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/intro.html</loc>
-    <lastmod>2025-08-15T00:56:50.132Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/intro.html</loc>
+    <lastmod>2026-06-16T16:48:58.256Z</lastmod>
   </url>
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/processing.html</loc>
-    <lastmod>2024-08-16T11:46:19.106Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/processing.html</loc>
+    <lastmod>2026-06-17T15:13:19.703Z</lastmod>
   </url>
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/modeling.html</loc>
-    <lastmod>2024-08-16T11:46:32.110Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/chemometrics.html</loc>
+    <lastmod>2026-06-17T14:48:02.426Z</lastmod>
   </url>
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/references.html</loc>
-    <lastmod>2023-10-02T21:28:11.455Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/machinelearning.html</loc>
+    <lastmod>2026-06-17T17:28:30.428Z</lastmod>
   </url>
   <url>
-    <loc>https://soilspectroscopy.github.io/soilspec-workshop/chemometrics.html</loc>
-    <lastmod>2024-08-19T01:11:48.728Z</lastmod>
+    <loc>https://soilspectroscopy.github.io/predictive-soilspec-training/references.html</loc>
+    <lastmod>2025-08-17T17:22:09.715Z</lastmod>
   </url>
 </urlset>

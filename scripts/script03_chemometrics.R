@@ -4,7 +4,6 @@ library("mdatools") # Chemometrics
 library("yardstick") # Additional performance metrics
 library("qs") # Loading serialized files
 
-
 ## ----files, message=FALSE, warning=FALSE------------------------------------------
 ## Internet configuration for downloading big datasets
 options(timeout = 10000)

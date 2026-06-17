@@ -6,12 +6,12 @@ book:
   title: "Predictive Soil Spectroscopy"
   page-footer:
     left: |
-      This training material was written by Jose L. Safanelli, Robert Minarik,
+      This training material was written by José L. Safanelli, Robert Minarik,
       Tomislav Hengl, and Jonathan Sanderman.
     right: |
       This book was built with <a href="https://quarto.org/">Quarto</a>.
-  site-url: https://soilspectroscopy.github.io/soilspec-workshop/
-  repo-url: https://github.com/soilspectroscopy/soilspec-workshop/
+  site-url: https://soilspectroscopy.github.io/predictive-soilspec-training/
+  repo-url: https://github.com/soilspectroscopy/predictive-soilspec-training/
   repo-branch: main
   repo-actions: [edit, issue]
   author:
@@ -31,13 +31,13 @@ book:
       orcid: 0000-0002-3215-1706
       email: jsanderman@woodwellclimate.org
       affiliations: Woodwell Climate Research Center
-  date: "08/14/2025"
+  date: today
   chapters:
     - index.qmd
     - intro.qmd
     - processing.qmd
-    - modeling.qmd
     - chemometrics.qmd
+    - machinelearning.qmd
     - references.qmd
 
 bibliography: references.bib
@@ -45,7 +45,7 @@ bibliography: references.bib
 format:
   html:
     theme: cosmo
-  pdf:
-    documentclass: scrreprt
+  # pdf:
+  #   documentclass: scrreprt
 
 editor: source
