@@ -1,17 +1,17 @@
-## ----working_directory----------------------------------------------------------------------------------------------------
+## ----working_directory-------------------------------------------------------------
 my.wd <- "~/projects/local-files/soilspec_training"
 # Or within an RStudio project
 # my.wd <- getwd()
 
 
-## ----setup, message=FALSE, warning=FALSE----------------------------------------------------------------------------------
+## ----setup, message=FALSE, warning=FALSE-------------------------------------------
 library("tidyverse")
 library("asdreader")
 library("opusreader2")
 library("prospectr")
 
 
-## ----asdreader, message=FALSE, warning=FALSE------------------------------------------------------------------------------
+## ----asdreader, message=FALSE, warning=FALSE---------------------------------------
 # Downloading an .asd file
 visnir.spectra.url <- "https://github.com/soilspectroscopy/ossl-models/raw/main/sample-data/101453MD01.asd"
 
@@ -33,7 +33,7 @@ visnir.spectra[1,1:5]
 range(as.numeric(colnames(visnir.spectra)))
 
 
-## ----opusreader2, message=FALSE, warning=FALSE----------------------------------------------------------------------------
+## ----opusreader2, message=FALSE, warning=FALSE-------------------------------------
 # Downloading an .0 file
 mir.spectra.url <- "https://github.com/soilspectroscopy/ossl-models/raw/main/sample-data/235157XS01.0"
 
@@ -58,7 +58,7 @@ dim(mir.spectra$ab$data)
 range(as.numeric(colnames(mir.spectra$ab$data)))
 
 
-## ----read_csv, message=FALSE, warning=FALSE-------------------------------------------------------------------------------
+## ----read_csv, message=FALSE, warning=FALSE----------------------------------------
 # Downloading a csv output from Neospectra
 nir.spectra.url <- "https://github.com/soilspectroscopy/ossl-models/raw/main/sample-data/sample_neospectra_data.csv"
 
@@ -79,7 +79,7 @@ nir.spectra[1:5,1:5]
 range(as.numeric(colnames(nir.spectra[,-1])))
 
 
-## ----nir_reflectance------------------------------------------------------------------------------------------------------
+## ----nir_reflectance---------------------------------------------------------------
 # Original data
 nir.spectra[1:5,1:5]
 
@@ -96,7 +96,7 @@ nir.spectra.rf <- nir.spectra %>%
 nir.spectra.rf[1:5,1:5]
 
 
-## ----visualization--------------------------------------------------------------------------------------------------------
+## ----visualization-----------------------------------------------------------------
 ## Pivot to long format
 nir.spectra.rf.long <- nir.spectra.rf %>%
   pivot_longer(all_of(spectra.column.names),
@@ -115,7 +115,7 @@ ggplot(data = nir.spectra.rf.long) +
   theme_light()
 
 
-## ----interpolation_columns------------------------------------------------------------------------------------------------
+## ----interpolation_columns---------------------------------------------------------
 # Old columns, reversed, and as numeric
 old.wavelength <- as.numeric(rev(spectra.column.names))
 head(old.wavelength)
@@ -125,7 +125,7 @@ new.wavelength <- seq(1350, 2550, by = 2)
 head(new.wavelength)
 
 
-## ----interpolation--------------------------------------------------------------------------------------------------------
+## ----interpolation-----------------------------------------------------------------
 # Selecting old spectra in increasing order
 # Parse to matrix (input of prospectr::resample)
 # Resample
@@ -145,7 +145,7 @@ nir.spectra.rf.int <- nir.spectra.rf %>%
 nir.spectra.rf.int[1:5,1:5]
 
 
-## ----visualization_resample-----------------------------------------------------------------------------------------------
+## ----visualization_resample--------------------------------------------------------
 new.spectra.column.names <- as.character(new.wavelength)
 
 nir.spectra.rf.int %>%
@@ -160,7 +160,7 @@ nir.spectra.rf.int %>%
   theme_light()
 
 
-## ----sg-------------------------------------------------------------------------------------------------------------------
+## ----sg----------------------------------------------------------------------------
 # Select spectra columns
 # Parse to matrix (input of prospectr::savitzkyGolay)
 # Apply preprocessing
@@ -177,7 +177,7 @@ nir.spectra.sg <- nir.spectra.rf.int %>%
 nir.spectra.sg[1:5,1:5]
 
 
-## ----sg_visualization-----------------------------------------------------------------------------------------------------
+## ----sg_visualization--------------------------------------------------------------
 nir.spectra.sg %>%
   pivot_longer(any_of(new.spectra.column.names),
                names_to = "wavelength",
@@ -190,7 +190,7 @@ nir.spectra.sg %>%
   theme_light()
 
 
-## ----snv------------------------------------------------------------------------------------------------------------------
+## ----snv---------------------------------------------------------------------------
 # Select spectra columns
 # Parse to matrix (input of prospectr::standardNormalVariate)
 # Apply preprocessing
@@ -207,7 +207,7 @@ nir.spectra.snv <- nir.spectra.rf.int %>%
 nir.spectra.snv[1:5,1:5]
 
 
-## ----snv_visualization----------------------------------------------------------------------------------------------------
+## ----snv_visualization-------------------------------------------------------------
 nir.spectra.snv %>%
   pivot_longer(any_of(new.spectra.column.names),
                names_to = "wavelength",

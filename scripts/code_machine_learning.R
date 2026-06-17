@@ -1,6 +1,5 @@
-## ----libraries, message=FALSE, warning=FALSE------------------------------------------------------------------------------
+## ----libraries, message=FALSE, warning=FALSE---------------------------------------
 library("tidyverse")
-library("qs")         # Loading serialized files
 library("prospectr")  # prep preprocessing
 library("tidymodels")
 library("probably")   # Conformal prediction intervals
@@ -12,22 +11,21 @@ library("yardstick")  # Performance metrics
 tidymodels_prefer()   # Resolve common function name conflicts
 
 
-## ----neospectra_read, eval=TRUE-------------------------------------------------------------------------------------------
+## ----neospectra_read, eval=TRUE----------------------------------------------------
 ## Internet configuration for downloading large datasets
 options(timeout = 10000)
 
-## Reading serialized files using qs::qread_url()
-neospectra.soil <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs")
+neospectra.soil <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.csv.gz")
 dim(neospectra.soil)
 
-neospectra.site <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.qs")
+neospectra.site <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.csv.gz")
 dim(neospectra.site)
 
-neospectra.nir <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.qs")
+neospectra.nir <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.csv.gz")
 dim(neospectra.nir)
 
 
-## ----neospectra_filter, eval=TRUE-----------------------------------------------------------------------------------------
+## ----neospectra_filter, eval=TRUE--------------------------------------------------
 # How many samples from each country?
 # Most samples are from USA, others from African countries
 # We will use this column to define the train/test split
@@ -64,7 +62,7 @@ spectral.column.names <- new.names
 neospectra.nir[1:5, 1:5]
 
 
-## ----neospectra_join, eval=TRUE-------------------------------------------------------------------------------------------
+## ----neospectra_join, eval=TRUE----------------------------------------------------
 neospectra <- left_join(neospectra.site,
                         neospectra.soil,
                         by = "id.sample_local_c") %>%
@@ -74,7 +72,7 @@ neospectra <- left_join(neospectra.site,
 neospectra[1:5, 1:5]
 
 
-## ----neospectra_prep, eval=TRUE-------------------------------------------------------------------------------------------
+## ----neospectra_prep, eval=TRUE----------------------------------------------------
 neospectra.nir.prep <- neospectra %>%
   select(all_of(spectral.column.names)) %>%
   as.matrix() %>%
@@ -102,7 +100,7 @@ neospectra.nir.prep %>%
   theme_light()
 
 
-## ----neospectra_split, eval=TRUE------------------------------------------------------------------------------------------
+## ----neospectra_split, eval=TRUE---------------------------------------------------
 neospectra.train <- neospectra.nir.prep %>%
   filter(location.country_iso.3166_txt == "USA")
 
@@ -113,7 +111,7 @@ nrow(neospectra.train)
 nrow(neospectra.test)
 
 
-## ----compression, eval=TRUE-----------------------------------------------------------------------------------------------
+## ----compression, eval=TRUE--------------------------------------------------------
 # Define and fit the PCA recipe on training data
 pca.recipe <- recipe(neospectra.train) %>%
   update_role(id.sample_local_c, new_role = "id variable") %>%
@@ -162,7 +160,7 @@ p.pca +
   labs(subtitle = "Black dots represent testing points")
 
 
-## ----backtransform, message=FALSE, error=FALSE----------------------------------------------------------------------------
+## ----backtransform, message=FALSE, error=FALSE-------------------------------------
 # Extract loadings, centering means, and scaling SDs from the prepped recipe
 n.pad <- nchar(length(pc.names))
 
@@ -214,7 +212,7 @@ test.q.stats <- apply((neospectra.test.spectra - test.bt)^2,
                       MARGIN = 1, sum)
 
 
-## ----q_critical, message=FALSE, error=FALSE-------------------------------------------------------------------------------
+## ----q_critical, message=FALSE, error=FALSE----------------------------------------
 # Critical value from the training set (1% significance level)
 E     <- cov(neospectra.train.spectra - train.bt)
 teta1 <- sum(diag(E))^1
@@ -227,7 +225,7 @@ Qa    <- teta1*(1 - (teta2*h0*((1-h0)/teta1^2)) +
 Qa
 
 
-## ----q_flag, message=FALSE, error=FALSE-----------------------------------------------------------------------------------
+## ----q_flag, message=FALSE, error=FALSE--------------------------------------------
 # Flag test samples and visualize on PCA plot
 test.pca.scores <- test.pca.scores %>%
   mutate(q_stats = test.q.stats,
@@ -240,7 +238,7 @@ p.pca +
   labs(fill = "Represented?")
 
 
-## ----log1p----------------------------------------------------------------------------------------------------------------
+## ----log1p-------------------------------------------------------------------------
 # Distribution of raw SOC values in the training set
 hist(train.pca.scores$oc_usda.c729_w.pct, breaks = 50,
      main = "SOC distribution (raw)", xlab = "SOC (wt%)")
@@ -256,7 +254,7 @@ hist(train.data$oc_usda.c729_w.pct, breaks = 50,
      main = "SOC distribution (log1p)", xlab = "log1p(SOC)")
 
 
-## ----recipe---------------------------------------------------------------------------------------------------------------
+## ----recipe------------------------------------------------------------------------
 base.recipe <- train.data %>%
   recipe() %>%
   update_role(id.sample_local_c, new_role = "id variable") %>%
@@ -268,7 +266,7 @@ base.recipe <- train.data %>%
 base.recipe
 
 
-## ----resamples------------------------------------------------------------------------------------------------------------
+## ----resamples---------------------------------------------------------------------
 set.seed(42)
 train.folds <- vfold_cv(train.data, v = 10)
 
@@ -280,7 +278,7 @@ ctrl.grid <- control_grid(save_pred = TRUE,
                           save_workflow = TRUE)
 
 
-## ----model_specs----------------------------------------------------------------------------------------------------------
+## ----model_specs-------------------------------------------------------------------
 # Linear regression (no hyperparameters to tune)
 spec.lm <- linear_reg() %>%
   set_engine("lm") %>%
@@ -306,7 +304,7 @@ spec.svm <- svm_rbf(cost      = tune(),
   set_mode("regression")
 
 
-## ----grids----------------------------------------------------------------------------------------------------------------
+## ----grids-------------------------------------------------------------------------
 grid.rf <- grid_regular(
   mtry(range = c(2L, floor(length(pc.names) / 3))),
   min_n(range = c(2L, 20L)),
@@ -322,7 +320,7 @@ grid.svm <- grid_regular(
   levels = 4)
 
 
-## ----workflows_tuning, message=FALSE, warning=FALSE-----------------------------------------------------------------------
+## ----workflows_tuning, message=FALSE, warning=FALSE--------------------------------
 # Linear regression — fit_resamples (no HPO needed)
 wf.lm <- workflow() %>%
   add_recipe(base.recipe) %>%
@@ -367,7 +365,7 @@ res.svm <- wf.svm %>%
             control = ctrl.grid)
 
 
-## ----select_best, message=FALSE, warning=FALSE----------------------------------------------------------------------------
+## ----select_best, message=FALSE, warning=FALSE-------------------------------------
 best.rf <- select_by_one_std_err(res.rf,
                                  mtry, min_n,
                                  metric = "rmse")
@@ -387,7 +385,7 @@ best.svm <- select_by_one_std_err(res.svm,
 best.svm
 
 
-## ----compare_models, message=FALSE, warning=FALSE-------------------------------------------------------------------------
+## ----compare_models, message=FALSE, warning=FALSE----------------------------------
 cv.metrics <- bind_rows(
   {res.lm %>%
     collect_metrics() %>%
@@ -414,7 +412,7 @@ cv.metrics <- bind_rows(
 cv.metrics %>% arrange(mean_rmse)
 
 
-## ----final_fits, message=FALSE, warning=FALSE-----------------------------------------------------------------------------
+## ----final_fits, message=FALSE, warning=FALSE--------------------------------------
 final.fit.lm <- wf.lm %>%
   fit(data = train.data)
 
@@ -431,14 +429,14 @@ final.fit.svm <- wf.svm %>%
   fit(data = train.data)
 
 
-## ----best_overall---------------------------------------------------------------------------------------------------------
+## ----best_overall------------------------------------------------------------------
 # Replace with the model that had the lowest CV RMSE in your run
 best.final.fit <- final.fit.svm
 best.res <- res.svm
 best.params <- best.svm
 
 
-## ----test_predictions, message=FALSE, warning=FALSE-----------------------------------------------------------------------
+## ----test_predictions, message=FALSE, warning=FALSE--------------------------------
 test.results <- predict(best.final.fit, new_data = test.data) %>%
   bind_cols(test.data %>%
               select(id.sample_local_c,
@@ -452,7 +450,7 @@ test.results <- predict(best.final.fit, new_data = test.data) %>%
 test.results[1:5,]
 
 
-## ----performance, message=FALSE, warning=FALSE----------------------------------------------------------------------------
+## ----performance, message=FALSE, warning=FALSE-------------------------------------
 test.performance <- test.results %>%
   summarise(n    = n(),
             rmse = rmse_vec(truth = observed, estimate = predicted),
@@ -465,7 +463,7 @@ test.performance <- test.results %>%
 test.performance
 
 
-## ----scatterplot, message=FALSE, warning=FALSE----------------------------------------------------------------------------
+## ----scatterplot, message=FALSE, warning=FALSE-------------------------------------
 performance.annotation <- paste0("Rsq = ",  round(test.performance[[1, "rsq"]],  2),
                                  "\nRMSE = ", round(test.performance[[1, "rmse"]], 2), " wt%")
 
@@ -488,7 +486,7 @@ t.min <- round(min(r.min, s.min), 1)
 p.final + coord_equal(xlim = c(t.min, t.max), ylim = c(t.min, t.max))
 
 
-## ----conformal, message=FALSE, warning=FALSE------------------------------------------------------------------------------
+## ----conformal, message=FALSE, warning=FALSE---------------------------------------
 # Finalized workflow for the best model
 final.wf.conformal <- wf.svm %>%
   finalize_workflow(best.svm)
@@ -507,7 +505,7 @@ conformal.object <- int_conformal_cv(res.conformal)
 conformal.object
 
 
-## ----conformal_predict, message=FALSE, warning=FALSE----------------------------------------------------------------------
+## ----conformal_predict, message=FALSE, warning=FALSE-------------------------------
 # Prediction intervals on the log1p scale, then back-transformed
 test.intervals <- predict(conformal.object,
                           new_data = test.data,
@@ -525,7 +523,7 @@ test.intervals <- predict(conformal.object,
 test.intervals[1:5,]
 
 
-## ----conformal_coverage, message=FALSE, warning=FALSE---------------------------------------------------------------------
+## ----conformal_coverage, message=FALSE, warning=FALSE------------------------------
 # Coverage statistics
 test.intervals %>%
   count(covered) %>%
@@ -538,7 +536,7 @@ test.intervals %>%
             median_width = median(interval_width))
 
 
-## ----conformal_plot, message=FALSE, warning=FALSE-------------------------------------------------------------------------
+## ----conformal_plot, message=FALSE, warning=FALSE----------------------------------
 conformal.annotation <- paste0(
   "Rsq = ",       round(test.performance[[1, "rsq"]],  2),
   "\nRMSE = ",    round(test.performance[[1, "rmse"]], 2), " wt%",

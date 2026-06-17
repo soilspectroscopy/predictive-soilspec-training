@@ -8,7 +8,6 @@ A list of all required packages for this section is provided in the following co
 
 ```{r libraries, message=FALSE, warning=FALSE}
 library("tidyverse")
-library("qs")         # Loading serialized files
 library("prospectr")  # prep preprocessing
 library("tidymodels")
 library("probably")   # Conformal prediction intervals
@@ -30,14 +29,13 @@ We use the NIR Neospectra Handheld database shared as part of the OSSL, which co
 ## Internet configuration for downloading large datasets
 options(timeout = 10000)
 
-## Reading serialized files using qs::qread_url()
-neospectra.soil <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs")
+neospectra.soil <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.csv.gz")
 dim(neospectra.soil)
 
-neospectra.site <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.qs")
+neospectra.site <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.csv.gz")
 dim(neospectra.site)
 
-neospectra.nir <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.qs")
+neospectra.nir <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.csv.gz")
 dim(neospectra.nir)
 ```
 

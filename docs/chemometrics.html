@@ -282,8 +282,7 @@ window.Quarto = {
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyverse"</span>) <span class="co"># Regular data wrangling</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"mdatools"</span>) <span class="co"># Chemometrics</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"yardstick"</span>) <span class="co"># Additional performance metrics</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"qs"</span>) <span class="co"># Loading serialized files</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"yardstick"</span>) <span class="co"># Additional performance metrics</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="preparation-of-files" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="preparation-of-files"><span class="header-section-number">3.1</span> Preparation of files</h2>
@@ -292,18 +291,17 @@ window.Quarto = {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Internet configuration for downloading large datasets</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">timeout =</span> <span class="dv">10000</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Reading serialized files using qs::qread_url()</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>neospectra.soil <span class="ot">&lt;-</span> <span class="fu">qread_url</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs"</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(neospectra.soil)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>neospectra.soil <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.csv.gz"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(neospectra.soil)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2106   24</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>neospectra.site <span class="ot">&lt;-</span> <span class="fu">qread_url</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.qs"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>neospectra.site <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.csv.gz"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(neospectra.site)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2106   32</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>neospectra.nir <span class="ot">&lt;-</span> <span class="fu">qread_url</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.qs"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>neospectra.nir <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.csv.gz"</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(neospectra.nir)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 8151  615</code></pre>
@@ -399,7 +397,7 @@ window.Quarto = {
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>neospectra.prep <span class="ot">&lt;-</span> neospectra <span class="sc">%&gt;%</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">all_of</span>(spectral.column.names)) <span class="sc">%&gt;%</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prep.savgol</span>(<span class="at">width =</span> <span class="dv">11</span>, <span class="at">porder =</span> <span class="dv">1</span>, <span class="at">dorder =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prep.savgol</span>(<span class="at">width =</span> <span class="dv">11</span>, <span class="at">porder =</span> <span class="dv">2</span>, <span class="at">dorder =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prep.snv</span>(.) <span class="sc">%&gt;%</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>({neospectra <span class="sc">%&gt;%</span></span>
@@ -512,9 +510,9 @@ Cross-validation: random with 10 segments
 
 Response variable: oc_usda.c729_w.pct
      X cumexpvar Y cumexpvar    R2  RMSE Slope    Bias  RPD
-Cal     94.66939    73.35968 0.734 0.293 0.734  0.0000 1.94
-Cv            NA          NA 0.711 0.305 0.725 -0.0002 1.86
-Test    94.50955    82.85942 0.587 0.239 0.785  0.1102 1.76</code></pre>
+Cal     94.49245    73.40152 0.734 0.293 0.734  0.0000 1.94
+Cv            NA          NA 0.712 0.305 0.725 -0.0003 1.86
+Test    94.92022    84.61751 0.630 0.226 0.770  0.0885 1.80</code></pre>
 </div>
 </div>
 <p>You can see that the number of selected components is 17, which was automatically chosen from the 10-fold CV results.</p>
@@ -545,9 +543,9 @@ Cross-validation: random with 10 segments
 
 Response variable: oc_usda.c729_w.pct
      X cumexpvar Y cumexpvar    R2  RMSE Slope    Bias  RPD
-Cal     91.58803    71.91489 0.719 0.301 0.719  0.0000 1.89
-Cv            NA          NA 0.704 0.308 0.714  0.0002 1.84
-Test    92.16374    86.36375 0.672 0.213 0.681 -0.0074 1.76</code></pre>
+Cal     91.34240    72.02690 0.720 0.300 0.720  0.0000 1.89
+Cv            NA          NA 0.705 0.308 0.715  0.0003 1.84
+Test    92.07832    86.99296 0.687 0.208 0.694 -0.0089 1.80</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pls.model.soc, <span class="at">show.legend =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -636,12 +634,12 @@ Levels: regular extreme outlier</code></pre>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(vip)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     oc_usda.c729_w.pct
-1350           0.852944
-1352           0.852944
-1354           0.852944
-1356           0.852944
-1358           0.852944
-1360           0.852944</code></pre>
+1350          1.1622995
+1352          1.0917348
+1354          1.0243444
+1356          0.9607963
+1358          0.9019032
+1360          0.8486347</code></pre>
 </div>
 </div>
 <p>There are many other plot functions available for interpreting the PLSR model.</p>
@@ -730,25 +728,25 @@ attr(,"lim.type")
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>pls.model.soc<span class="sc">$</span>Qlim</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>                    Comp 1   Comp 2    Comp 3    Comp 4    Comp 5    Comp 6
-Extremes limits  281.09873 155.5899 126.66209 104.43189  84.12812  67.24583
-Outliers limits 1145.60993 634.1024 516.20778 425.60922 342.86179 274.05850
-Mean              46.91653  25.9686  21.14042  17.43011  14.04133  11.22361
-DoF                1.00000   1.0000   1.00000   1.00000   1.00000   1.00000
-                    Comp 7     Comp 8    Comp 9    Comp 10    Comp 11
-Extremes limits  53.051708  45.354386  39.84516  37.515935  33.587508
-Outliers limits 216.210737 184.840520 162.38781 152.895136 136.884943
-Mean              8.854548   7.569833   6.65032   6.261563   5.605893
-DoF               1.000000   1.000000   1.00000   1.000000   1.000000
-                   Comp 12    Comp 13   Comp 14   Comp 15   Comp 16   Comp 17
-Extremes limits  31.003186  27.850992 22.875638 21.284158 18.779020 16.395094
-Outliers limits 126.352611 113.505933 93.229018 86.742986 76.533367 66.817742
-Mean              5.174559   4.648445  3.818038  3.552413  3.134295  2.736408
-DoF               1.000000   1.000000  1.000000  1.000000  1.000000  1.000000
+<pre><code>                    Comp 1    Comp 2    Comp 3    Comp 4    Comp 5    Comp 6
+Extremes limits  282.18636 156.95081 127.84632 105.88727  85.41140  68.43250
+Outliers limits 1150.04255 639.64862 521.03406 431.54058 348.09176 278.89472
+Mean              47.09806  26.19573  21.33807  17.67302  14.25551  11.42166
+DoF                1.00000   1.00000   1.00000   1.00000   1.00000   1.00000
+                    Comp 7     Comp 8     Comp 9    Comp 10    Comp 11
+Extremes limits  54.314727  46.710122  40.948797  39.044748  34.666357
+Outliers limits 221.358136 190.365785 166.885667 159.125770 141.281761
+Mean              9.065351   7.796111   6.834522   6.516729   5.785957
+DoF               1.000000   1.000000   1.000000   1.000000   1.000000
+                   Comp 12    Comp 13   Comp 14  Comp 15   Comp 16   Comp 17
+Extremes limits  30.978516  27.774594 23.576400 22.05308 18.736556 17.054155
+Outliers limits 126.252067 113.194573 96.084952 89.87671 76.360307 69.503727
+Mean              5.170441   4.635694  3.934998  3.68075  3.127208  2.846408
+DoF               1.000000   1.000000  1.000000  1.00000  1.000000  1.000000
                   Comp 18   Comp 19   Comp 20
-Extremes limits 14.493664 12.846608 10.335675
-Outliers limits 59.068518 52.355989 42.122753
-Mean             2.419052  2.144152  1.725067
+Extremes limits 15.307381 13.573347 11.095329
+Outliers limits 62.384797 55.317792 45.218698
+Mean             2.554865  2.265447  1.851856
 DoF              1.000000  1.000000  1.000000
 attr(,"name")
 [1] "Critical limits for orthogonal distances (Q)"
@@ -861,7 +859,7 @@ Major fields:
 <pre><code># A tibble: 1 × 7
       n  rmse   bias   rsq   ccc   rpd  rpiq
   &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1    90 0.495 0.0410 0.742 0.832  1.98  1.41</code></pre>
+1    90 0.479 0.0361 0.758 0.845  2.05  1.46</code></pre>
 </div>
 </div>
 <p>And plot the final observed vs.&nbsp;predicted scatterplot with <strong>ggplot2</strong>.</p>

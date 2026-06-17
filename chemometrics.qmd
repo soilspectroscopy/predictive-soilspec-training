@@ -18,7 +18,6 @@ A list of all required packages for this section is provided in the following co
 library("tidyverse") # Regular data wrangling
 library("mdatools") # Chemometrics
 library("yardstick") # Additional performance metrics
-library("qs") # Loading serialized files
 ```
 
 ## Preparation of files
@@ -29,14 +28,13 @@ Instead of using the `train.csv` and `test.csv` files from the **Processing** se
 ## Internet configuration for downloading large datasets
 options(timeout = 10000)
 
-## Reading serialized files using qs::qread_url()
-neospectra.soil <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs")
+neospectra.soil <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.csv.gz")
 dim(neospectra.soil)
 
-neospectra.site <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.qs")
+neospectra.site <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.csv.gz")
 dim(neospectra.site)
 
-neospectra.nir <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.qs")
+neospectra.nir <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.csv.gz")
 dim(neospectra.nir)
 ```
 
@@ -120,7 +118,7 @@ To start with chemometrics, **mdatools** offers a series of built-in functions f
 neospectra.prep <- neospectra %>%
   select(all_of(spectral.column.names)) %>%
   as.matrix() %>%
-  prep.savgol(width = 11, porder = 1, dorder = 1) %>%
+  prep.savgol(width = 11, porder = 2, dorder = 1) %>%
   prep.snv(.) %>%
   as_tibble() %>%
   bind_cols({neospectra %>%

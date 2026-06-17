@@ -1,26 +1,24 @@
-## ----libraries, message=FALSE, warning=FALSE------------------------------------------------------------------------------
+## ----libraries, message=FALSE, warning=FALSE---------------------------------------
 library("tidyverse") # Regular data wrangling
 library("mdatools") # Chemometrics
 library("yardstick") # Additional performance metrics
-library("qs") # Loading serialized files
 
 
-## ----files, message=FALSE, warning=FALSE----------------------------------------------------------------------------------
+## ----files, message=FALSE, warning=FALSE-------------------------------------------
 ## Internet configuration for downloading large datasets
 options(timeout = 10000)
 
-## Reading serialized files using qs::qread_url()
-neospectra.soil <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.qs")
+neospectra.soil <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soillab_v1.2.csv.gz")
 dim(neospectra.soil)
 
-neospectra.site <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.qs")
+neospectra.site <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_soilsite_v1.2.csv.gz")
 dim(neospectra.site)
 
-neospectra.nir <- qread_url("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.qs")
+neospectra.nir <- read_csv("https://storage.googleapis.com/soilspec4gg-public/neospectra_nir_v1.2.csv.gz")
 dim(neospectra.nir)
 
 
-## ----preparation, message=FALSE, warning=FALSE----------------------------------------------------------------------------
+## ----preparation, message=FALSE, warning=FALSE-------------------------------------
 # Selecting relevant site data
 neospectra.site <- neospectra.site %>%
   select(id.sample_local_c, location.country_iso.3166_txt)
@@ -57,7 +55,7 @@ head(spectral.column.names)
 tail(spectral.column.names)
 
 
-## ----join, message=FALSE, warning=FALSE-----------------------------------------------------------------------------------
+## ----join, message=FALSE, warning=FALSE--------------------------------------------
 # Joining data
 neospectra <- left_join(neospectra.site,
                         neospectra.soil,
@@ -69,7 +67,7 @@ neospectra <- neospectra %>%
   filter(!is.na(oc_usda.c729_w.pct))
 
 
-## ----visualization, message=FALSE, warning=FALSE--------------------------------------------------------------------------
+## ----visualization, message=FALSE, warning=FALSE-----------------------------------
 # Spectral visualization of a random subset
 set.seed(42)
 neospectra %>%
@@ -85,7 +83,7 @@ neospectra %>%
   theme_light()
 
 
-## ----preprocessing, message=FALSE, warning=FALSE--------------------------------------------------------------------------
+## ----preprocessing, message=FALSE, warning=FALSE-----------------------------------
 # Preprocessing with SG 1st Der. and SNV
 neospectra.prep <- neospectra %>%
   select(all_of(spectral.column.names)) %>%
@@ -111,7 +109,7 @@ neospectra.prep %>%
   theme_light()
 
 
-## ----split, message=FALSE, warning=FALSE----------------------------------------------------------------------------------
+## ----split, message=FALSE, warning=FALSE-------------------------------------------
 # Train split: USA samples
 # Predictors and outcome are separated; log1p is applied to SOC to reduce skewness
 neospectra.train <- neospectra.prep %>%
@@ -140,7 +138,7 @@ neospectra.test.outcome <- neospectra.test %>%
   as.matrix()
 
 
-## ----plsr, message=FALSE, warning=FALSE-----------------------------------------------------------------------------------
+## ----plsr, message=FALSE, warning=FALSE--------------------------------------------
 set.seed(42)
 pls.model.soc <- pls(x = neospectra.train.predictors,
                      y = neospectra.train.outcome,
@@ -152,7 +150,7 @@ pls.model.soc <- pls(x = neospectra.train.predictors,
                      info = "SOC prediction model")
 
 
-## ----plsr_split, message=FALSE, warning=FALSE-----------------------------------------------------------------------------
+## ----plsr_split, message=FALSE, warning=FALSE--------------------------------------
 # Alternatively: fit calibration model first, then predict on test set
 set.seed(42)
 pls.model.soc.calibration <- pls(x = neospectra.train.predictors,
@@ -168,23 +166,23 @@ pls.model.soc.predictions <- predict(pls.model.soc.calibration,
                                      cv = FALSE)
 
 
-## ----model_summary--------------------------------------------------------------------------------------------------------
+## ----model_summary-----------------------------------------------------------------
 summary(pls.model.soc)
 
 
-## ----model_viz------------------------------------------------------------------------------------------------------------
+## ----model_viz---------------------------------------------------------------------
 # Visualize representation limits, model coefficients, performance, and fit
 plot(pls.model.soc, show.legend = TRUE)
 
 
-## ----select_ncomp---------------------------------------------------------------------------------------------------------
+## ----select_ncomp------------------------------------------------------------------
 # Performance is more consistent across train, CV, and test with 11 components
 pls.model.soc <- selectCompNum(pls.model.soc, 11)
 summary(pls.model.soc)
 plot(pls.model.soc, show.legend = FALSE)
 
 
-## ----classification, message=FALSE, warning=FALSE-------------------------------------------------------------------------
+## ----classification, message=FALSE, warning=FALSE----------------------------------
 # Sample categorization based on Q and T2 limits
 outlier.detection <- categorize(pls.model.soc.calibration,
                                 pls.model.soc.predictions,
@@ -196,50 +194,50 @@ plotResiduals(pls.model.soc.predictions,
               ncomp = 11)
 
 
-## ----performance_components-----------------------------------------------------------------------------------------------
+## ----performance_components--------------------------------------------------------
 plotRMSE(pls.model.soc, show.labels = TRUE)
 
 
-## ----scatterplot----------------------------------------------------------------------------------------------------------
+## ----scatterplot-------------------------------------------------------------------
 # Predictions scatterplot
 plotPredictions(pls.model.soc, show.line = TRUE, pch = 20, cex = 0.25)
 abline(a = 0, b = 1)
 
 
-## ----residuals------------------------------------------------------------------------------------------------------------
+## ----residuals---------------------------------------------------------------------
 # Inspection plot for outcome residuals
 plotYResiduals(pls.model.soc, cex = 0.5, show.label = TRUE)
 
 
-## ----vip------------------------------------------------------------------------------------------------------------------
+## ----vip---------------------------------------------------------------------------
 # Variable Importance in Projection (VIP) scores
 plotVIPScores(pls.model.soc)
 vip <- vipscores(pls.model.soc, ncomp = 11)
 head(vip)
 
 
-## ----x_variance-----------------------------------------------------------------------------------------------------------
+## ----x_variance--------------------------------------------------------------------
 # Cumulative variance retained from predictors (spectra)
 plotXCumVariance(pls.model.soc, type = 'h', show.labels = TRUE, legend.position = 'bottomright')
 
 
-## ----y_variance-----------------------------------------------------------------------------------------------------------
+## ----y_variance--------------------------------------------------------------------
 # Cumulative variance retained from outcome
 plotYCumVariance(pls.model.soc, type = 'b', show.labels = TRUE, legend.position = 'bottomright')
 
 
-## ----x_scores-------------------------------------------------------------------------------------------------------------
+## ----x_scores----------------------------------------------------------------------
 # Score plots for compressed spectra
 plotXScores(pls.model.soc, comp = c(1, 2), show.legend = TRUE, cex = 0.5, legend.position = 'topleft')
 # plotXScores(pls.model.soc, comp = c(1, 3), show.legend = TRUE, cex = 0.5, legend.position = 'bottomright')
 
 
-## ----loadings-------------------------------------------------------------------------------------------------------------
+## ----loadings----------------------------------------------------------------------
 # Loadings plot for the first 5 components
 plotXLoadings(pls.model.soc, comp = c(1, 2, 3, 4, 5), type = 'l')
 
 
-## ----internal-------------------------------------------------------------------------------------------------------------
+## ----internal----------------------------------------------------------------------
 # Exploring internal info from model object
 pls.model.soc$T2lim
 pls.model.soc$Qlim
@@ -251,7 +249,7 @@ pls.model.soc$res$test
 pls.model.soc$res$test$xdecomp
 
 
-## ----predictions----------------------------------------------------------------------------------------------------------
+## ----predictions-------------------------------------------------------------------
 # Extracting test predictions
 test.predictions <- pls.model.soc$res$test$y.pred
 dim(test.predictions)
@@ -267,7 +265,7 @@ neospectra.test.results <- neospectra.test %>%
   mutate(predicted = expm1(predicted))
 
 
-## ----yardstick------------------------------------------------------------------------------------------------------------
+## ----yardstick---------------------------------------------------------------------
 # Calculating performance metrics
 neospectra.test.performance <- neospectra.test.results %>%
   summarise(n = n(),
@@ -281,7 +279,7 @@ neospectra.test.performance <- neospectra.test.results %>%
 neospectra.test.performance
 
 
-## ----ggplot---------------------------------------------------------------------------------------------------------------
+## ----ggplot------------------------------------------------------------------------
 # Final accuracy plot
 performance.annotation <- paste0("Rsq = ", round(neospectra.test.performance[[1,"rsq"]], 2),
                                 "\nRMSE = ", round(neospectra.test.performance[[1,"rmse"]], 2), " wt%")
