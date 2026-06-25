@@ -3,9 +3,11 @@
 Welcome to this training guide on **Predictive Soil Spectroscopy**! This material was originally developed for an in-person workshop in 2023 and has since been used in multiple training events and reused by many practitioners worldwide. It is now maintained as a living document, open for anyone to access and build upon.
 
 Training workshops:\
-- [Predictive Soil Spectroscopy](https://scisoc.confex.com/scisoc/2023am/meetingapp.cgi/Session/25216) (Pre-conforence workshop) at the ASA-CSSA-SSSA International Annual Meeting 2023 (St. Louis, MO, USA).\
-- Introduction to Soil Spectroscopy Modeling at [FUNCEME](http://www.funceme.br/), Fortaleza, CE, Brazil, 2024.\
-- [Predictive Soil Spectroscopy](https://event.fourwaves.com/cssscsa2026/pages/e8bd5803-14a9-4561-abd8-89a97a86677b) (a session of the full-day pre-conference workshop "Soil Spectroscopy: The nuts and bolts of soil spectroscopy science and applications") at the 2026 CSSS-CSA Meeting (University of Guelph, ON, Canada).\
+- [**Predictive Soil Spectroscopy**](https://scisoc.confex.com/scisoc/2023am/meetingapp.cgi/Session/25216) (Pre-conforence workshop) at the ASA-CSSA-SSSA International Annual Meeting 2023 (St. Louis, MO, USA).\
+- Introduction to Soil Spectroscopy Modeling at [**FUNCEME**](http://www.funceme.br/), Fortaleza, CE, Brazil, 2024.\
+- [**Predictive Soil Spectroscopy**](https://event.fourwaves.com/cssscsa2026/pages/e8bd5803-14a9-4561-abd8-89a97a86677b) (a session of the full-day pre-conference workshop "Soil Spectroscopy: The nuts and bolts of soil spectroscopy science and applications") at the 2026 CSSS-CSA Meeting (University of Guelph, ON, Canada).\
+
+![Credit: Tegbaru Gobezie.](img/workshop_uofg.JPG){width=70% fig-align="center"}
 
 ***
 
